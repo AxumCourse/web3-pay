@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>USDT转账</title>
+  </head>
+  <body>
+    <button onclick="usdtTrans()">USDT转账</button>
+
+    <script src="./get_tronweb.js"></script>
+    <script>
+      async function usdtTrans() {
+        try {
+          const tronWeb = await getTronWeb(); // 获取 tronWeb 对象
+          const toAddress = "TAxzbhQAPYoZNKRPwctnCLFk8r3WMoFL5P"; // 收款人钱包地址
+          const USDTContractAddress = "TXLAQ63Xg1NAzckPwKHvzw7CSEmLMEqcdj"; // USDT 智能合约地址
+
+          // 【步骤1】获取智能合约实例
+          const instance = await tronWeb.contract().at(USDTContractAddress);
+
+          // 【步骤2】调用智能合约的 transfer() 方法，并发送交易
+          const txId = await instance.transfer(toAddress, 10).send({});
+          console.log(txId);
+        } catch (e) {
+          alert(e.message);
+          console.log(e);
+        }
+      }
+    </script>
+  </body>
+</html>

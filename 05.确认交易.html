@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>确认交易</title>
+  </head>
+  <body>
+    <button onclick="getConfirmedTx()">确认交易</button>
+
+    <script src="./get_tronweb.js"></script>
+    <script>
+      async function getConfirmedTx() {
+        try {
+          const tronWeb = await getTronWeb(); // 获取 tronWeb 对象
+          const txId =
+            "9485d5369a78e0e4f6cc7a4aaf86c8e0edc96551193745e14712267e815b2bba"; // 交易ID
+
+          const res = await tronWeb.trx.getConfirmedTransaction(txId);
+          if (res.ret[0].contractRet === "SUCCESS") {
+            alert("交易已确认");
+          } else {
+            alert("交易还未确认");
+          }
+        } catch (e) {
+          alert(e.message);
+          console.log(e);
+        }
+      }
+    </script>
+  </body>
+</html>

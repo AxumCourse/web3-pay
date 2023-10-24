@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TRX转账</title>
+  </head>
+  <body>
+    <button onclick="trxTrans()">TRX转账</button>
+
+    <script src="./get_tronweb.js"></script>
+    <script>
+      async function trxTrans() {
+        try {
+          const tronWeb = await getTronWeb(); // 获取 tronWeb 对象
+          const toAddress = "TAxzbhQAPYoZNKRPwctnCLFk8r3WMoFL5P"; // 收款人钱包地址
+          const fromAddress = tronWeb.defaultAddress.base58; // 转账人钱包地址。可以直接从 TronLink 钱包里拿到默认账号的地址
+
+          // 【步骤1】构造交易
+          const tx = await tronWeb.transactionBuilder.sendTrx(
+            toAddress,
+            10,
+            fromAddress
+          );
+
+          // 【步骤2】对交易进行签名
+          const signedTx = await tronWeb.trx.sign(tx);
+
+          // 【步骤3】发送交易
+          const res = await tronWeb.trx.sendRawTransaction(signedTx);
+          if (res.result) {
+            alert("转账成功");
+          } else {
+            alert("转账失败");
+          }
+        } catch (e) {
+          alert(e.message);
+          console.log(e);
+        }
+      }
+    </script>
+  </body>
+</html>
