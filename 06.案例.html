@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>案例</title>
+  </head>
+  <body>
+    <div>
+      订单金额：<span id="amount">0.00001</span> USDT
+      <button id="btnPay" onclick="pay()">支付</button>
+    </div>
+    <div style="margin-top: 3rem">
+      <textarea id="logs" rows="15" style="width: 100%"></textarea>
+    </div>
+
+    <script src="./get_tronweb.js"></script>
+    <script>
+      let timer; // 定时器
+      let isConfirmed = false; // 是否确认交易
+
+      async function pay() {
+        try {
+          // 获取金额
+          const amountStr = document.getElementById("amount").innerText;
+          const amount = parseFloat(amountStr) || 0;
+
+          // 按钮
+          const btn = document.getElementById("btnPay");
+          btn.setAttribute("disabled", true);
+          btn.innerText = "正在支付";
+          appendLogs("正在支付");
+
+          const tronWeb = await getTronWeb(); // 获取 tronWeb 对象
+          const toAddress = "TAxzbhQAPYoZNKRPwctnCLFk8r3WMoFL5P"; // 收款人钱包地址
+          const USDTContractAddress = "TXLAQ63Xg1NAzckPwKHvzw7CSEmLMEqcdj"; // USDT 智能合约地址
+
+          // 获取智能合约实例
+          const instance = await tronWeb.contract().at(USDTContractAddress);
+
+          // 调用智能合约的 transfer() 方法，并发送交易
+          const txId = await instance
+            .transfer(toAddress, tronWeb.toSun(amount))
+            .send({});
+
+          console.log("交易ID：", txId);
+          appendLogs("交易ID：", txId);
+
+          // 确认交易
+          timer = setInterval(async () => {
+            await confirmTx(tronWeb, txId, btn);
+          }, 3000);
+        } catch (e) {
+          //   alert(e.message);
+          console.log("pay:", e);
+        }
+      }
+
+      async function confirmTx(tronWeb, txId, btn) {
+        try {
+          console.log("正在确认交易", new Date());
+          btn.innerText = "正在确认交易";
+          appendLogs("正在确认交易：", txId);
+
+          const res = await tronWeb.trx.getConfirmedTransaction(txId);
+
+          isConfirmed = res && res?.ret[0]?.contractRet === "SUCCESS";
+          console.log("confirmTx:", res, isConfirmed);
+        } catch (e) {
+          console.log("confirmTx:", e);
+        } finally {
+          if (isConfirmed) {
+            // btn.setAttribute("disabled", false);
+            btn.innerText = "支付成功";
+            appendLogs("支付完成");
+            clearInterval(timer);
+
+            // 发送结果给后端API
+            await sendToAPI(txId, btn);
+          }
+        }
+      }
+
+      async function sendToAPI(txId, btn) {
+        try {
+          console.log("正在发送结果给后端API", new Date());
+          btn.innerText = "正在发送结果给后端API";
+          appendLogs("正在发送结果给后端API：", txId);
+
+          const apiUrl = "https://httpbin.org/post";
+
+          const data = { txId };
+
+          const res = await fetch(apiUrl, {
+            headers: {
+              "content-type": "application/json",
+            },
+            method: "POST",
+            body: JSON.stringify(data),
+          });
+
+          const json = await res.json();
+          console.log("sendToAPI: ", json);
+
+          btn.innerText = "交易完成";
+          appendLogs("交易完成");
+        } catch (e) {
+          console.log("sendToAPI: ", e);
+        }
+      }
+
+      function appendLogs(...logs) {
+        const el = document.getElementById("logs");
+        const currentLog = el.value.split("\n");
+        currentLog.unshift([new Date(), [...logs]].join(" "));
+        el.value = currentLog.join("\n");
+      }
+    </script>
+  </body>
+</html>
